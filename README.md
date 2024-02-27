@@ -11,7 +11,8 @@ Hubitat driver for DirecTV IP control of receivers
 This driver uses the DirecTV SHEF API. As implemented, it only uses HTTP Gets, but the API permits other methods for the adventurous. This driver was created so I could use Hubitat to replace my now defunct Logitech Harmony remote and not use an IR-based remote. As I know nothing about Groovy but had a good knowledge of Perl and Javascript, I used this as an exercise to learn how to do what I needed.  I then took the extra step to document to the best of my ability so other non-developers won't have to go through what I did. (*note: I was able to functionally replicate most of what this driver does using Rule Machine itself)
         
 <h2>What can you do</h2>
-This driver permits local, direct control of a DirecTV receiver using DirecTV's own API that runs on the receiver itself. You can get on-demand access to information on the receiver
+This driver permits local, direct control of a DirecTV receiver using DirecTV's own API that runs on the receiver itself for  on-demand access to information on the receiver.
+<br/>
 The following functions are available:
 <ul>
 	<li>Check the operating mode of the receiver</li>
