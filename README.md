@@ -91,6 +91,27 @@ Run custom command &gt; Actuator &gt;  Function name (getTuned)
 	</ul>
  </ul>
 
+<h3>Dashboard</h3>
+To control your DirecTV receiver from a dashboard, you need to use an intermediary <u>virtual button</u> and <u>button controller</u> because you can't issue custom commands from dashboards.   
+Here's what you need to do:
+<ol>
+	<li>Create a virtual button device. Go to DEVICES - add device - virtual - virtual button.  You can make as many buttons on your device as you want <img width="1439" alt="virtual button" src="https://github.com/rnoia/DirecTV-IP-Control-for-Hubitat/assets/65049274/9cdc072c-0eca-493e-8d34-9d4eea9b52ef">
+</li>
+	<li>If you don't already have the built-in button controller app, install it by: Go to APPS - press the "add built in app" button at the top right.- Search for "button controller"</li>
+	<li>Add a new button controller and link it to the new device you created in the first step</li>
+	<li>Configure the button controller by selecting the button number and button state (pressed) and entering the commands you want the butotn to do - it works and looks just like Rule Machine</li>
+	<li>To issue a remote button key you'll want to do: Run a custom command - Actuator - Pick your DirecTV device - sendKey, paramter=string, then in the input box enter the keyname you want (chanup) in this case. If you ever forget a key's name, you can see the complete list on the DirecTV device page under the dropdown for "sendKey" - here is the config to run the custom command. <br/><img width="1472" alt="defined button" src="https://github.com/rnoia/DirecTV-IP-Control-for-Hubitat/assets/65049274/f93a8050-aec6-4fd8-9c6e-7e1409fad401">
+<br/>
+		here's what it should look like if you want to use the getTuned command<br/><img width="593" alt="button controller gettuned" src="https://github.com/rnoia/DirecTV-IP-Control-for-Hubitat/assets/65049274/b88389c2-31d1-4c32-a184-d80e6f983a79"></li>
+	<li>Go to your dashboard configuration page - add the _button device_ to the dashboard</li>
+	<li>Go to your dashboard and add a new button and link it to the _button device_ you just added -I have a problem with buttons not retaining configuration when freshly added, so just hit save</li>
+	<li>Click your just-added button and configure it: confirm it's still assigned to the device you want, and enter the button number (that corresponds to the definiton in the button controller) and match it to the state in your controller (pushed, released, held, double tapped)</li>
+	<li>Press the button and confirm it does what you expected</li>
+</ol>
+Optionally - if you want to have a button to force an on-demand getTuned/refresh of what is playing, change your button controller to do a "refresh" command or "getTuned".
+
+
+
 <h3>General</h3>
 <ul>
 <li>As this driver simulates a switch, rule machine can trigger this device via simple Switch on/off commands which would then send the command to the receiver.</li>
