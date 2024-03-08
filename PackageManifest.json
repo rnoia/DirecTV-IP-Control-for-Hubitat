@@ -1,0 +1,17 @@
+{
+        "packageName": "DirecTVIPControlHubitat",
+        "releaseNotes": "v1.00 Initial",
+        "documentationLink": "https://github.com/rnoia/DirecTV-IP-Control-for-Hubitat/blob/main/README.md",
+        "author": "rnoia",
+        "version": "1.0",
+        "dateReleased": "2024-02-26",
+        "category": "Control",
+        "tags": "Multimedia",
+        "drivers": [
+           {
+                  "id": "cd499347-96ed-4866-82ee-46bf4334c616",
+                  "location": "https://github.com/rnoia/DirecTV-IP-Control-for-Hubitat/blob/main/DirecTV%20Hubitat.groovy",
+                  "description": "Local direct IP-based control of DirecTV Genie-based DVR and receivers"
+           }
+        ]
+}
