@@ -1,10 +1,10 @@
 {
         "packageName": "DirecTVIPControlHubitat",
-        "releaseNotes": "v1.00 Initial",
+        "releaseNotes": "v1.1 May 2026",
         "documentationLink": "https://github.com/rnoia/DirecTV-IP-Control-for-Hubitat/blob/main/README.md",
         "author": "rnoia",
-        "version": "1.0",
-        "dateReleased": "2024-02-26",
+        "version": "1.1",
+        "dateReleased": "2026-05-24",
         "category": "Control",
         "tags": "Multimedia",
         "drivers": [
