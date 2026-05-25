@@ -423,7 +423,7 @@ def getMode(command){
             } 
 
             sendKey("poweron")
-            log.debug "PowerON: sending on"
+            if (debugMode){log.debug "PowerON: sending on"}
             sendEvent(name: "switch", value: "on",  isStateChange:true)
 
             if (debugMode){
@@ -436,7 +436,6 @@ def getMode(command){
                 sendEvent(name: "message", value: "DirecTV is on",  isStateChange:true)
             }
             getTuned()
-
         }
         else if (command == "ShouldBeOFF"){
             //This is the only other option fo getmode, so adding this here for clarity, if a command is optionally passed to getmode, it can't be anything else other than these two at this time
@@ -450,7 +449,7 @@ def getMode(command){
          else if (command == null){
             //this is ok
             if (debugMode){
-                log.debug "GETMODE: Status appears ok, command arguent specified was: ${command}"
+                log.debug "GETMODE: Status appears ok, command argument specified was: ${command}"
             } 
         }
         else {
@@ -523,7 +522,7 @@ def getLocations(){
 
 def sendKey(keyName){
     /*
-    this function is used to send a remote control button press. it cannot be used to send a string -the API only accepts the specific keys mentioned by name. There is no API for sending a string/word.
+    this function is used to send a remote control button press. It cannot be used to send a string -the API only accepts the specific keys mentioned by name. There is no API for sending a string/word.
 
     the API command is /remote/processKey?KEYNAME
 
