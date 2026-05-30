@@ -11,7 +11,9 @@
            {
                   "id": "cd499347-96ed-4866-82ee-46bf4334c616",
                   "location": "https://raw.githubusercontent.com/rnoia/DirecTV-IP-Control-for-Hubitat/main/DirecTV%20Hubitat.groovy",
-                  "description": "Local direct IP-based control of DirecTV Genie-based DVR and receivers"
+                  "description": "Local direct IP-based control of DirecTV Genie-based DVR and receivers",
+                  "required": true,
+                  "name": "DirecTV DVR IP-based control driver"
            }
         ]
 }
