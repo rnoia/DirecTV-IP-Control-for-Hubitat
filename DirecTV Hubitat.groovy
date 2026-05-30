@@ -24,6 +24,7 @@
     *   ----    ----        ---             ----
     *   1.0     2024-02-26  Roger Noia      Initial Release
     *   1.1     2026-05-24  Roger Noia      minor changes inculding  clarifying ShouldBeON/ShouldBeOFF, removed some redundancies, added forced delay of 1 sec between any command to prevent recevier from crashing due to non-completion of prior command due to DirecTV delay; added isPpv and isVod attributes to show if the current program is a pay-per-view or video on demand program
+    *   1.2     2026-05-29  Roger Noia      minor changes to fix state variables that weren't setting, additional troubleshooting for 500 server errors returned between getMode-ShouldbeON
     *
         
  Refer to DirecTV SHEF IP control API to see what's available.
@@ -184,12 +185,12 @@ def getTuned(client){
     
     {broadcastStartTime=1708282800, callsign=COOKHD, contentStartTime=28488, date=20181006, duration=1890, episodeTitle=Tuscany, expiration=0, expiryDate=0, expiryTime=0, isOffAir=false, isPartial=false, isPclocked=3, isPpv=false, isRecording=false, isViewed=true, isVod=false, keepUntilFull=true, major=232, minor=65535, offset=33, priority=56 of 91, programId=96970959, rating=TV-G, recType=5, startTime=1708282800, stationId=9867492, status={code=200, commandResult=0, msg=OK., query=/tv/getTuned}, title=Bizarre Foods: Delicious Destinations, uniqueId=111810}
 
-    note: elements that appear only in a recorded program: expiration, expiryDate, expiryTime, isPartial, isViewed, priority, recType
+    note: elements that appear only in a recorded program: expiration, expiryDate, expiryTime, isPartial, isViewed, priority, recType, date
     note: element "priority 56 of 91" means this program is in the receiver's recording manager (scheduler) for automatic recording
     the API command is /tv/getTuned?[clientAddr=string] where clientAddr is optional / only used to specify which client, otherwise defaults to 0 which is the server
     */
 
-    if (debugMode) log.debug "GETTUNED: Querying receiver for program getTuned..."
+    if (debugMode) log.debug "GETTUNED: 192: Querying receiver for program getTuned..."
 
     def programTitle=""
     def programEpisode=""
@@ -205,12 +206,12 @@ def getTuned(client){
     sendEvent(name: "programEpisodeTitle" , value:" ", descriptionText: "the title of the episode")
 
     if (client){
-        if  (debugMode) log.debug "GETTUNED:client specified on gettuned: ${client}"
+        if  (debugMode) log.debug "GETTUNED 208:client specified on gettuned: ${client}"
     }
 
     // getTuned will return 500 server error if the receiver is off, so it needs to be checked first...
     if (device.currentValue("switch") == "off"){
-        if (debugMode) log.debug "GETTUNED: getTuned cannot be used against an off receiver"
+        if (debugMode) log.debug "GETTUNED 213: getTuned cannot be used against an off receiver"
         sendEvent(name: "ERROR" , value:"getTuned command cannot be used when the receiver is off", descriptionText: "uh oh") // this puts a covenient temporary message into a state attribute if you uncomment this
         killswitch="kill"
         clearState()
@@ -221,18 +222,22 @@ def getTuned(client){
         if (!(client)){
         //DirecTVfunction="tv/getTuned"            
         sendDirecTVCommand("getTuned", "none", "none")
+        if (debugMode) log.debug "GETTUNED 224: no client specified for gettuned, normal operation"
         }
         else
         {
         sendDirecTVCommand("getTuned", "clientAddr", client) // this issues the getTuned command against a specific client receiver. unlike the primary receiver, this data is not stored in state attributes as I didn't think it was that useful for my particular needs.To make it work, state-attributes would need to be hard-coded into the driver, but since they can't be defined dynamically, so you'd have to pre-define some amount of state variables for each client receiver
+        if (debugMode) log.debug "GETTUNED 229: a client was sprcified ${client}"
         }
         
         if (debugMode) log.debug "GETTUNED:  response after sending: ${res}"
 
+        //  FROM HERE ON IS RESPONSE PROCESSING
+
         if(res.recType) {
             // program is a recording
             if (debugMode) log.debug "GETTUNED: program is a recording"
-            sendEvent(name: "isARecording" , value:"true", descriptionText: descriptionText)
+            sendEvent(name: "isARecording" , value:"true", descriptionText: "the program is a recording", isStateChange:true)
 
             if (res.date){
                 sendEvent(name: "programRecordedDate" , value:res.date, descriptionText: "the date the program was recorded", isStateChange:true)
@@ -246,17 +251,17 @@ def getTuned(client){
                 }  
             }
             else{
-            if (debugMode) log.debug "GETTUNED: program is NOT a recording"
-            sendEvent(name: "isARecording" , value:"false", descriptionText: "this is not a recording",  isStateChange:true)
+                if (debugMode) log.debug "GETTUNED: program is NOT a recording"
+                sendEvent(name: "isARecording" , value:"false", descriptionText: "this is not a recording",  isStateChange:true)
             }
                 
         if(res.episodeTitle){
             //program has an episode name, likely a series, but it isn't always consistent
-            sendEvent(name: "programEpisodeTitle" , value:res.episodeTitle, descriptionText: "the title of the episode - ${programEpisode}",  isStateChange:true)
+            sendEvent(name: "programEpisodeTitle" , value:res.episodeTitle, descriptionText: "the title of the episode - ${res.episodeTitle}",  isStateChange:true)
             }
         else{
-            //clear the state attribute but no delete it so dashboard buttons work and can be updated later if an episode title appears
-            sendEvent(name: "programEpisodeTitle" , value:" ", descriptionText: "the title of the episode - none for this",  isStateChange:true)
+            //clear the state attribute but not delete it so dashboard buttons work and can be updated later if an episode title appears
+            sendEvent(name: "programEpisodeTitle" , value:" ", descriptionText: "no episode title for this",  isStateChange:true)
             }
     if (res.minor != 65535){
         // channel has a minor number, change channel displayed number to ###.#.  65535 is the directv minor channel number for "doesn't have a minor channel"
@@ -273,12 +278,8 @@ def getTuned(client){
     sendEvent(name: "programTitle" , value:res.title, descriptionText: "program title",  isStateChange:true)
     sendEvent(name: "channelNumber" , value:channelNum, descriptionText: "channel number",  isStateChange:true)
     sendEvent(name: "channelCallsign" , value:res.callsign, descriptionText: "callsign",  isStateChange:true)
-    sendEvent(name: "channelCallsign" , value:res.callsign, descriptionText: "callsign",  isStateChange:true)
     sendEvent(name: "programisPpv" , value:res.isPpv, descriptionText: "is Pay per view",  isStateChange:true)
     sendEvent(name: "programisVod" , value:res.isVod, descriptionText: "is video on demand",  isStateChange:true)
-    
-
-
 
     } // end killswitch check   
     else{
@@ -323,7 +324,6 @@ def sendDirecTVCommand(function,secondary,tertiary) {
             channelNum=secondary
             DirecTVfunction="tv/tune?major=" + secondary // major is used to refer to the primary channel number vs secondary dot channels like 2.1
         }
-    pauseExecution(1000) // delay required otherwise directv receiver will throw server error 500. it needs a short period before it can process commands
 
     }
     
@@ -343,12 +343,16 @@ def sendDirecTVCommand(function,secondary,tertiary) {
     httpGet(postParams) { resp ->
         if (resp.success) {
             res = resp.data
+            if (debugMode) log.debug "RESPONSE: ${resp.data}"
         }
         else{
             log.debug "senddirectvcommand: ERROR crap"
+             if (debugMode) log.debug "RESPONSE: ${resp.data}"
             return "error"
             }
     }
+    pauseExecution(1000) // delay required otherwise directv receiver will throw server error 500. it needs a short period before it can process commands
+
 } //end sendDirecTVCommand
 
 
@@ -363,10 +367,13 @@ def getMode(command){
 
     if(res.mode ==0 ) {
         // receiver is on
+        sendEvent(name: "switch", value: "on",  isStateChange:true)
+
         if (debugMode){
             log.debug "GETMODE: directv is on"
             sendEvent(name: "message", value: "DirecTV is on",  isStateChange:true)
-        } 
+        }
+
         if (command == "ShouldBeOFF"){
             //this is used to change the mode of the receiver if it's not in right state and is sent via the device UI page as the dropdown option. You can also send a command to this function with this parameter from another rule machine function or button controller
             //simply being here means the receiver is on (because mode=0 ) and in the wrong state because there is also a "shouldBeOFF" command passed
@@ -396,8 +403,8 @@ def getMode(command){
             } 
 
         }
-        else if (command == null){
-            //this is ok
+        else if (command == null || command == "nocheck"){
+            //this is ok, used to handle when no error check or correction is desired.
             if (debugMode){
                 log.debug "GETMODE: Status appears ok, command arguent specified was: ${command}"
             } 
@@ -405,7 +412,7 @@ def getMode(command){
         else {
             //something is very wrong. there should be no other options passed.
             log.debug "GETMODE: Error. Receiver is ON but Unexpected command passed to getMode: ${command}"
-            sendEvent(name: "message", value: "GETMODE: Reciver on but ERROR unexpected command passed ",  isStateChange:true)
+            sendEvent(name: "message", value: "GETMODE: Receiver on but ERROR unexpected command passed ",  isStateChange:true)
         }
     } // end of mode=0 (receiver is on)
     else{
@@ -423,7 +430,7 @@ def getMode(command){
             } 
 
             sendKey("poweron")
-            if (debugMode){log.debug "PowerON: sending on"}
+            if (debugMode){log.debug "GETMODE-SHOULDBEON-PowerON: sending on"}
             sendEvent(name: "switch", value: "on",  isStateChange:true)
 
             if (debugMode){
@@ -432,7 +439,7 @@ def getMode(command){
             }
 
             if (debugMode){
-                log.debug "GETTuned Within GetModeShouldBeON: directv is on"
+                log.debug "GETTuned Within GetModeShouldBeON: directv should now be on"
                 sendEvent(name: "message", value: "DirecTV is on",  isStateChange:true)
             }
             getTuned()
@@ -443,8 +450,8 @@ def getMode(command){
             log.debug "GETMODE-ShouldBeOFF: directv is expected to be off and is already off"
             sendEvent(name: "message", value: "GETMODE-ShouldBeOFF: directv is supposed to be off and is off already",  isStateChange:true)
             } 
-            //sendEvent(name: "switch" , value:"off",  isStateChange:true)
-            //unnecessary since the receiver is already off
+            sendEvent(name: "switch" , value:"off",  isStateChange:true)
+            //unnecessary since the receiver is already off, sending just in case to see if this resolves state problem
         }
          else if (command == null){
             //this is ok
@@ -472,7 +479,7 @@ def clearState(){
         sendEvent(name: "channelCallsign" , value:" ", descriptionText: "callsign",  isStateChange:true)
         sendEvent(name: "programRecordingPriority" , value:" ", descriptionText: "recording priority",  isStateChange:true)
         sendEvent(name: "programRecordedDate" , value:" ", descriptionText: "recording date",  isStateChange:true)
-        sendEvent(name: "isARecording" , value:" ", descriptionText: "is a recordding",  isStateChange:true)
+        sendEvent(name: "isARecording" , value:" ", descriptionText: "is a recording",  isStateChange:true)
         sendEvent(name: "programEpisodeTitle" , value:" ", descriptionText: "episode title",  isStateChange:true)
         sendEvent(name: "programisPpv" , value:" ", descriptionText: "is pay per view",  isStateChange:true)
         sendEvent(name: "programisVod" , value:" ", descriptionText: "is a video on demand",  isStateChange:true)
@@ -535,6 +542,7 @@ def sendKey(keyName){
     */
 
     sendDirecTVCommand("sendKey", keyName, "none")
+    if (debugMode) log.debug "sendDirecTVCommand: sending remote keypress ${keyName}"
 
 }
 
@@ -650,12 +658,14 @@ def powerToggle() {
 
 def on() {
     sendKey("poweron")
+    if (debugMode) log.debug "POWERON: sending power on"
     sendEvent(name: "switch", value: "on",  isStateChange:true)
     getTuned()
 }
 
 def off() {
     sendKey("poweroff")
+    if (debugMode) log.debug "POWEROFF: sending power off"
     sendEvent(name: "switch", value: "off",  isStateChange:true)
     clearState()
-        }
+}

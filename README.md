@@ -7,6 +7,8 @@ Hubitat driver for DirecTV IP control of receivers
     *   ----    ----        ---             ----
     *   1.0     2024-02-26  Roger Noia      Initial Release
 	*   1.1     2026-05-24  Roger Noia      minor changes inculding  clarifying ShouldBeON/ShouldBeOFF, removed some redundancies, added forced delay of 1 sec between any command to prevent recevier from crashing due to non-completion of prior command due to DirecTV delay; added isPpv and isVod attributes to show if the current program is a pay-per-view or video on demand program
+	*   1.2     2026-05-29  Roger Noia      minor changes to fix state variables that weren't setting, additional troubleshooting for 500 server errors returned between getMode-ShouldbeON
+
     *
         
 This driver uses the DirecTV SHEF API. As implemented, it only uses HTTP Gets, but the API permits other methods for the adventurous. This driver was created so I could use Hubitat to replace my now defunct Logitech Harmony remote and not use an IR-based remote. As I know nothing about Groovy but had a good knowledge of Perl and Javascript, I used this as an exercise to learn how to do what I needed.  I then took the extra step to document to the best of my ability so other non-developers won't have to go through what I did. (*note: I was able to functionally replicate most of what this driver does using Rule Machine itself)
